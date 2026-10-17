@@ -1,0 +1,41 @@
+<!-- Top navigation bar -->
+<mat-toolbar color="primary">
+  <a mat-button routerLink="/welcome" style="font-size:1.1rem;font-weight:600">
+    <mat-icon>event</mat-icon>&nbsp;EventRes
+  </a>
+
+  <span style="flex:1"></span>
+
+  <a mat-button routerLink="/events" routerLinkActive="active-link">Events</a>
+
+  @if (auth.currentUser$ | async; as user) {
+    <!-- Authenticated nav -->
+    @if (user.role === 'ADMIN') {
+      <a mat-button routerLink="/admin/users"   routerLinkActive="active-link">Users</a>
+      <a mat-button routerLink="/admin/export"  routerLinkActive="active-link">Export</a>
+    }
+    <a mat-button routerLink="/home"      routerLinkActive="active-link">Home</a>
+    @if (user.role === 'ORGANIZER') {
+      <a mat-button routerLink="/my-events"    routerLinkActive="active-link">My Events</a>
+    }
+    <a mat-button routerLink="/my-bookings" routerLinkActive="active-link">My Bookings</a>
+    <a mat-icon-button routerLink="/messages" routerLinkActive="active-link"
+       [matBadge]="unreadCount > 0 ? unreadCount : null"
+       matBadgeColor="warn"
+       matTooltip="Messages">
+      <mat-icon>notifications</mat-icon>
+    </a>
+    <button mat-button (click)="auth.logout()">
+      <mat-icon>logout</mat-icon> Logout
+    </button>
+  } @else {
+    <!-- Guest nav -->
+    <a mat-button routerLink="/login"    routerLinkActive="active-link">Log In</a>
+    <a mat-button routerLink="/register" routerLinkActive="active-link">Register</a>
+  }
+</mat-toolbar>
+
+<!-- Main content area -->
+<main>
+  <router-outlet />
+</main>

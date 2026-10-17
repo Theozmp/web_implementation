@@ -1,0 +1,66 @@
+.page-container {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-header h1 {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+}
+
+// Filters
+
+.filters-bar {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.search-field { flex: 1; min-width: 220px; }
+.status-field { width: 160px; }
+
+// Loading
+
+.loading-row {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+// Table
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.full-width { width: 100%; }
+
+.clickable-row {
+  cursor: pointer;
+  &:hover { background: var(--mat-sys-surface-container); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Status badge
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  &.status-pending  { background: #fff3cd; color: #856404; }
+  &.status-active   { background: #d1fae5; color: #065f46; }
+  &.status-rejected { background: #fee2e2; color: #991b1b; }
+}

@@ -1,0 +1,32 @@
+# Stage 1: build.
+# Use the official Maven image (Maven pre-installed) so the wrapper doesn't have to
+# download Maven at build time, which fails on SSL in the Alpine container.
+# eclipse-temurin is the Adoptium OpenJDK build, widely used and LTS.
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
+
+WORKDIR /app
+
+# copy pom.xml first so dependency downloads cache in their own layer and are
+# skipped on later builds while pom.xml is unchanged.
+COPY backend/pom.xml ./pom.xml
+RUN mvn dependency:go-offline -B
+
+# then copy the source and build the fat JAR (-DskipTests; integration tests run
+# separately via ./mvnw test, not in the Docker build).
+COPY backend/src ./src
+RUN mvn package -DskipTests -B
+
+# Stage 2: runtime.
+# JRE-only image for a smaller attack surface and faster pull; the fat JAR from
+# spring-boot:repackage is self-contained.
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# copy only the runnable JAR from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# 8080 for HTTP (dev), 8443 for HTTPS (prod via the SSL profile)
+EXPOSE 8080 8443
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

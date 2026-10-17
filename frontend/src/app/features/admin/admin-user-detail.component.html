@@ -1,0 +1,81 @@
+<div class="page-container">
+
+  @if (loading) {
+    <div class="loading-center"><mat-spinner /></div>
+
+  } @else if (user) {
+
+    <!-- Header -->
+    <div class="detail-header">
+      <a mat-button routerLink="/admin/users">
+        <mat-icon>arrow_back</mat-icon> All Users
+      </a>
+      <div class="header-title">
+        <h1>{{ user.firstName }} {{ user.lastName }}</h1>
+        <span class="status-badge status-{{ user.status.toLowerCase() }}">
+          {{ user.status | titlecase }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-row">
+
+      <mat-card>
+        <mat-card-header><mat-card-title>Account</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <dl class="detail-grid">
+            <dt>Username</dt>   <dd>{{ user.username }}</dd>
+            <dt>Email</dt>      <dd>{{ user.email }}</dd>
+            <dt>Role</dt>       <dd>{{ user.role | titlecase }}</dd>
+            <dt>Registered</dt> <dd>{{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+            <dt>Updated</dt>    <dd>{{ user.updatedAt  | date:'dd/MM/yyyy HH:mm' }}</dd>
+            @if (user.mustChangePassword) {
+              <dt>Password</dt>
+              <dd class="warn-text">Change required on next login</dd>
+            }
+          </dl>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card>
+        <mat-card-header><mat-card-title>Profile</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <dl class="detail-grid">
+            <dt>Tax ID (ΑΦΜ)</dt> <dd>{{ user.taxId       ?? '—' }}</dd>
+            <dt>Phone</dt>         <dd>{{ user.phone        ?? '—' }}</dd>
+            <dt>Address</dt>       <dd>{{ user.addressLine  ?? '—' }}</dd>
+            <dt>City</dt>          <dd>{{ user.city         ?? '—' }}</dd>
+            <dt>Country</dt>       <dd>{{ user.country      ?? '—' }}</dd>
+            @if (user.latitude !== null && user.longitude !== null) {
+              <dt>Coordinates</dt>
+              <dd>{{ user.latitude }}, {{ user.longitude }}</dd>
+            }
+          </dl>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+    <!-- Action bar (only for PENDING accounts) -->
+    @if (user.status === 'PENDING') {
+      <div class="action-bar">
+        <p class="action-hint">This account is awaiting admin review.</p>
+        <button mat-flat-button color="primary" (click)="approve()">
+          <mat-icon>check_circle</mat-icon> Approve
+        </button>
+        <button mat-stroked-button color="warn" (click)="reject()">
+          <mat-icon>cancel</mat-icon> Reject
+        </button>
+      </div>
+    }
+
+    @if (actionError) {
+      <p class="error-banner">{{ actionError }}</p>
+    }
+
+  } @else {
+    <p class="empty-state">User not found.</p>
+  }
+
+</div>

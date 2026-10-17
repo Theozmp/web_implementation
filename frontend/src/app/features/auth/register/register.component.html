@@ -1,0 +1,226 @@
+<div class="auth-container">
+
+  @if (submitted) {
+    <!-- Success state -->
+    <mat-card class="auth-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar color="primary">check_circle</mat-icon>
+        <mat-card-title>Application Received</mat-card-title>
+        <mat-card-subtitle>Almost there!</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="success-text">
+          Your registration has been submitted and is awaiting admin approval.
+          You will be able to log in once your account is activated.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <a mat-flat-button color="primary" routerLink="/login">Go to Log In</a>
+      </mat-card-actions>
+    </mat-card>
+
+  } @else {
+    <!-- Registration form -->
+    <mat-card class="auth-card">
+      <mat-card-header>
+        <mat-card-title>Create Account</mat-card-title>
+        <mat-card-subtitle>Choose how you want to use the app</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+          <!-- Role selection -->
+          <h3 class="section-heading">I want to register as</h3>
+
+          <mat-radio-group formControlName="role" class="role-group" aria-label="Select a role">
+            <mat-radio-button value="ORGANIZER">
+              <span class="role-option">
+                <strong>Organizer</strong>
+                <small>Create and manage my own events (and book others' too)</small>
+              </span>
+            </mat-radio-button>
+            <mat-radio-button value="PARTICIPANT">
+              <span class="role-option">
+                <strong>Participant</strong>
+                <small>Browse and book events created by others</small>
+              </span>
+            </mat-radio-button>
+          </mat-radio-group>
+          @if (f['role'].invalid && f['role'].touched) {
+            <p class="role-error">Please choose a role</p>
+          }
+
+          <!-- Account credentials -->
+          <h3 class="section-heading">Account</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username" autocomplete="username" />
+            @if (f['username'].invalid && f['username'].touched) {
+              @if (f['username'].errors?.['required']) {
+                <mat-error>Username is required</mat-error>
+              } @else if (f['username'].errors?.['minlength']) {
+                <mat-error>Username must be at least 4 characters</mat-error>
+              } @else if (f['username'].errors?.['pattern']) {
+                <mat-error>Only letters, digits and underscores allowed</mat-error>
+              }
+            }
+            @if (serverErrors['username']) {
+              <mat-error>{{ serverErrors['username'] }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="email" />
+            @if (f['email'].invalid && f['email'].touched) {
+              @if (f['email'].errors?.['required']) {
+                <mat-error>Email is required</mat-error>
+              } @else if (f['email'].errors?.['email']) {
+                <mat-error>Enter a valid email address</mat-error>
+              }
+            }
+            @if (serverErrors['email']) {
+              <mat-error>{{ serverErrors['email'] }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="new-password" />
+            @if (f['password'].invalid && f['password'].touched) {
+              @if (f['password'].errors?.['required']) {
+                <mat-error>Password is required</mat-error>
+              } @else if (f['password'].errors?.['passwordTooShort']) {
+                <mat-error>Password must be at least 8 characters</mat-error>
+              } @else if (f['password'].errors?.['passwordNeedsLetter']) {
+                <mat-error>Password must contain at least one letter</mat-error>
+              } @else if (f['password'].errors?.['passwordNeedsDigit']) {
+                <mat-error>Password must contain at least one digit</mat-error>
+              }
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirm Password</mat-label>
+            <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
+            @if (f['confirmPassword'].touched) {
+              @if (f['confirmPassword'].errors?.['required']) {
+                <mat-error>Please confirm your password</mat-error>
+              } @else if (f['confirmPassword'].errors?.['passwordMatch']) {
+                <mat-error>Passwords do not match</mat-error>
+              }
+            }
+          </mat-form-field>
+
+          <!-- Personal information -->
+          <h3 class="section-heading">Personal Information</h3>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="firstName" autocomplete="given-name" />
+              @if (f['firstName'].invalid && f['firstName'].touched) {
+                <mat-error>First name is required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="lastName" autocomplete="family-name" />
+              @if (f['lastName'].invalid && f['lastName'].touched) {
+                <mat-error>Last name is required</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Greek Tax ID (ΑΦΜ)</mat-label>
+            <input matInput formControlName="taxId" maxlength="9" placeholder="9-digit number" />
+            @if (f['taxId'].invalid && f['taxId'].touched) {
+              @if (f['taxId'].errors?.['required']) {
+                <mat-error>Tax ID is required</mat-error>
+              } @else if (f['taxId'].errors?.['afmFormat']) {
+                <mat-error>Tax ID must be exactly 9 digits</mat-error>
+              } @else if (f['taxId'].errors?.['afmChecksum']) {
+                <mat-error>Invalid Tax ID — check your ΑΦΜ number</mat-error>
+              }
+            }
+            @if (serverErrors['taxId']) {
+              <mat-error>{{ serverErrors['taxId'] }}</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Contact & location (optional) -->
+          <h3 class="section-heading">
+            Contact &amp; Location <span class="optional-label">(optional)</span>
+          </h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Phone</mat-label>
+            <input matInput formControlName="phone" type="tel" autocomplete="tel" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Address</mat-label>
+            <input matInput formControlName="addressLine" autocomplete="street-address" />
+          </mat-form-field>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" autocomplete="address-level2" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Country</mat-label>
+              <input matInput formControlName="country" autocomplete="country-name" />
+            </mat-form-field>
+          </div>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Latitude</mat-label>
+              <input matInput formControlName="latitude" type="number"
+                     step="0.000001" placeholder="-90 to 90" />
+              @if (f['latitude'].invalid && f['latitude'].touched) {
+                <mat-error>Must be between −90 and 90</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Longitude</mat-label>
+              <input matInput formControlName="longitude" type="number"
+                     step="0.000001" placeholder="-180 to 180" />
+              @if (f['longitude'].invalid && f['longitude'].touched) {
+                <mat-error>Must be between −180 and 180</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Submit -->
+          @if (errorMessage) {
+            <p class="error-banner">{{ errorMessage }}</p>
+          }
+
+          <button mat-flat-button color="primary" type="submit"
+                  class="full-width" [disabled]="loading">
+            @if (loading) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Create Account
+            }
+          </button>
+
+        </form>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <span>Already have an account?</span>
+        <a mat-button routerLink="/login">Log In</a>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+</div>

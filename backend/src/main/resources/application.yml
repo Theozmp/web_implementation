@@ -1,0 +1,165 @@
+# common / default configuration (applies to all profiles)
+spring:
+  application:
+    name: events
+  profiles:
+    # Default is dev + test-data so a fresh checkout boots with a populated demo
+    # dataset (see TestDataSeeder). Override via env-var: SPRING_PROFILES_ACTIVE=dev
+    # for an empty DB, or =prod in production.
+    active: ${SPRING_PROFILES_ACTIVE:dev,test-data}
+  jackson:
+    # serialize Instant/LocalDateTime as ISO-8601 strings, not epoch numbers;
+    # the frontend expects "2026-05-18T12:00:00Z", not 1747569600000.
+    serialization:
+      write-dates-as-timestamps: false
+
+# Spring Boot Actuator: only the health endpoint is exposed, with show-details so
+# liveness probes can read component details without auth. Everything else stays off.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+# OpenAPI / Swagger UI (accessible at /swagger-ui.html in dev)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # let the Swagger UI call secured endpoints with a Bearer token
+    try-it-out-enabled: true
+
+# DEV profile (default when running locally)
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    # createDatabaseIfNotExist: MySQL creates the schema on first connect.
+    # useSSL=false: no TLS between app and local DB in dev.
+    # allowPublicKeyRetrieval: needed for MySQL 8 caching_sha2_password.
+    url: ${DB_URL:jdbc:mysql://localhost:3306/events_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USER:events_user}
+    password: ${DB_PASSWORD:events_pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      # validate: Hibernate checks entities against the schema but never changes
+      # it; Flyway owns all schema changes.
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false   # keep lazy-load surprises out of the controller layer
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # keep false for a fresh install; set true only when retrofitting Flyway onto
+    # an existing schema.
+    baseline-on-migrate: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+# app-specific settings (read by our own @ConfigurationProperties beans)
+app:
+  jwt:
+    # use a long random string in prod; this dev default is intentionally obvious.
+    secret: ${JWT_SECRET:DEV-ONLY-SECRET-PLEASE-CHANGE-THIS-IN-PRODUCTION-MUST-BE-256-BITS}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}    # 1 hour (spec requirement)
+  admin:
+    initial-password: ${ADMIN_INITIAL_PASSWORD:Admin@123456}
+  upload:
+    # photos live on the local filesystem and are served as static resources.
+    # override UPLOAD_DIR in Docker and map a host volume to the same path.
+    dir: ${UPLOAD_DIR:./uploads}
+    max-photos-per-event: 5
+
+# Biased Matrix Factorization recommender
+recommender:
+  latent-factors: ${RECOMMENDER_K:20}            # dimensions of each factor vector
+  learning-rate: ${RECOMMENDER_LR:0.005}          # SGD step size
+  regularization: ${RECOMMENDER_LAMBDA:0.02}      # L2 regularisation coefficient
+  epochs: ${RECOMMENDER_EPOCHS:30}                # max SGD passes over training data
+  early-stopping-patience: 3                      # stop if val-RMSE stagnates for N epochs
+  model-path: ${RECOMMENDER_MODEL_PATH:./data/bmf-model.json}
+  # seed dataset (Kaggle "Event Recommendation Challenge" event_interest.csv),
+  # loaded once at startup when no saved model exists, to bootstrap the latent space.
+  dataset:
+    enabled: ${RECOMMENDER_DATASET_ENABLED:true}                       # false trains on live DB data only
+    path: ${RECOMMENDER_DATASET_PATH:classpath:dataset/event_interest.csv}  # classpath: (in jar) or file:/abs/path
+
+logging:
+  level:
+    root: INFO
+    gr.uoa.di.ted.events: DEBUG   # verbose for our own code
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+# PROD profile
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    # all values must come from environment variables; no defaults here.
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8443}
+  ssl:
+    enabled: true
+    # to generate the keystore, see the README's "Enabling HTTPS" section
+    key-store: ${SSL_KEY_STORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD}
+    key-store-type: PKCS12
+    key-alias: ${SSL_KEY_ALIAS:events}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  admin:
+    initial-password: ${ADMIN_INITIAL_PASSWORD}
+
+# structured JSON logging for production (built into Spring Boot 3.4+).
+# each log line is one JSON object, compatible with Logstash/ELK/Loki, and needs no
+# extra dependency.
+logging:
+  structured:
+    format:
+      console: logstash
+  level:
+    root: WARN
+    gr.uoa.di.ted.events: INFO
+    # no Hibernate SQL logging in prod; it would flood the log with query noise
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF

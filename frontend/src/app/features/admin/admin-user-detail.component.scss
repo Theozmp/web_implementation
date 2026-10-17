@@ -1,0 +1,102 @@
+.page-container {
+  padding: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+// Header
+
+.detail-header {
+  margin-bottom: 1.5rem;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+
+  h1 { margin: 0; font-size: 1.5rem; }
+}
+
+// Cards
+
+.cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 680px) {
+  .cards-row { grid-template-columns: 1fr; }
+}
+
+// Detail grid (dt/dd pairs)
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin: 0.5rem 0 0;
+
+  dt {
+    font-weight: 600;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+  }
+  dd { margin: 0; word-break: break-word; }
+}
+
+// Action bar
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container);
+}
+
+.action-hint {
+  flex: 1;
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Misc
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+  padding: 3rem;
+}
+
+.error-banner {
+  margin-top: 1rem;
+  color: var(--mat-sys-error);
+  font-size: 0.875rem;
+}
+
+.warn-text { color: var(--mat-sys-error); }
+
+// Status badge (same as list)
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &.status-pending  { background: #fff3cd; color: #856404; }
+  &.status-active   { background: #d1fae5; color: #065f46; }
+  &.status-rejected { background: #fee2e2; color: #991b1b; }
+}

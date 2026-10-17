@@ -1,0 +1,62 @@
+services:
+
+  # MySQL 8
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass          # root is only used for initial setup
+      MYSQL_DATABASE: events_db
+      MYSQL_USER: events_user
+      MYSQL_PASSWORD: events_pass
+    ports:
+      - "3307:3306"                          # expose to host for local DB clients (3307 avoids conflict with a local MySQL)
+    volumes:
+      - mysql_data:/var/lib/mysql            # persist data across container restarts
+    healthcheck:
+      # Wait until MySQL actually accepts connections before the backend starts
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "events_user", "-pevents_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Spring Boot backend
+  backend:
+    build:
+      context: .                             # repo root; Dockerfile references backend/
+      dockerfile: docker/Dockerfile.backend
+      network: host                          # use host network during build so Maven/npm can reach registries
+    ports:
+      - "8080:8080"
+    environment:
+      # test-data seeds the demo dataset (users/events/bookings) on first boot so a
+      # fresh `docker compose up` shows a working app immediately. Drop it to "dev"
+      # for an empty database.
+      SPRING_PROFILES_ACTIVE: dev,test-data
+      DB_URL: "jdbc:mysql://mysql:3306/events_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      DB_USER: events_user
+      DB_PASSWORD: events_pass
+      # IMPORTANT: change JWT_SECRET and ADMIN_INITIAL_PASSWORD before any
+      # deployment outside your local machine.
+      JWT_SECRET: "docker-compose-dev-secret-CHANGE-THIS-IN-PRODUCTION"
+      ADMIN_INITIAL_PASSWORD: "Admin@123456"
+    depends_on:
+      mysql:
+        condition: service_healthy           # only start after DB is ready
+
+  # Angular frontend (served by nginx)
+  frontend:
+    build:
+      context: .                             # repo root; Dockerfile references frontend/
+      dockerfile: docker/Dockerfile.frontend
+      network: host                          # use host network during build so npm can reach the registry
+    ports:
+      - "80:80"                              # plain HTTP, 301-redirected to HTTPS
+      - "443:443"                            # HTTPS, the app is served here (https://localhost)
+    depends_on:
+      - backend
+
+# Named volume so MySQL data survives docker compose down
+volumes:
+  mysql_data:

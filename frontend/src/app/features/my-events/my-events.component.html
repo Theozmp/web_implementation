@@ -1,0 +1,107 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>My Events</h1>
+    <a mat-raised-button color="primary" routerLink="/my-events/new">
+      <mat-icon>add</mat-icon> New Event
+    </a>
+  </div>
+
+  <!-- Status filter -->
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+          <mat-option value="">All</mat-option>
+          <mat-option value="DRAFT">Draft</mat-option>
+          <mat-option value="PUBLISHED">Published</mat-option>
+          <mat-option value="CANCELLED">Cancelled</mat-option>
+          <mat-option value="COMPLETED">Completed</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Table -->
+  <div class="table-container mat-elevation-z2">
+    @if (loading) {
+      <div class="spinner-overlay"><mat-spinner diameter="48"></mat-spinner></div>
+    }
+
+    <mat-table [dataSource]="events" matSort>
+
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Title</th>
+        <td mat-cell *matCellDef="let row">{{ row.title }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-badge" [class]="'status-' + row.status.toLowerCase()">
+            {{ row.status }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="startDatetime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+        <td mat-cell *matCellDef="let row">{{ row.startDatetime | date:'dd MMM yyyy, HH:mm' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="capacity">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Capacity</th>
+        <td mat-cell *matCellDef="let row">{{ row.capacity }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="sold">
+        <th mat-header-cell *matHeaderCellDef>Sold</th>
+        <td mat-cell *matCellDef="let row">{{ row.ticketsSold }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Actions">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            @if (row.status === 'DRAFT' || row.status === 'PUBLISHED') {
+              <button mat-menu-item (click)="editEvent(row.id)">
+                <mat-icon>edit</mat-icon><span>Edit</span>
+              </button>
+            }
+            @if (row.status === 'DRAFT') {
+              <button mat-menu-item (click)="publishEvent(row)">
+                <mat-icon>publish</mat-icon><span>Publish</span>
+              </button>
+              <button mat-menu-item class="warn-item" (click)="deleteEvent(row)">
+                <mat-icon>delete</mat-icon><span>Delete</span>
+              </button>
+            }
+            @if (row.status === 'PUBLISHED') {
+              <button mat-menu-item class="warn-item" (click)="cancelEvent(row)">
+                <mat-icon>cancel</mat-icon><span>Cancel</span>
+              </button>
+            }
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell empty-state" [attr.colspan]="displayedColumns.length">
+          No events found. <a routerLink="/my-events/new">Create your first event.</a>
+        </td>
+      </tr>
+    </mat-table>
+
+    <mat-paginator [pageSizeOptions]="[10, 20, 50]"
+                   [pageSize]="10"
+                   [length]="totalElements"
+                   showFirstLastButtons>
+    </mat-paginator>
+  </div>
+</div>

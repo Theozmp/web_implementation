@@ -1,0 +1,30 @@
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.error-banner {
+  color: var(--mat-sys-error);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+mat-card-actions {
+  padding: 0 1rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

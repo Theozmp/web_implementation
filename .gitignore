@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Raw recommender dataset (Kaggle "Event Recommendation Engine Challenge")
+#
+# ~1.5 GB of CSVs (and a ~170 MB zip of the same). The Biased MF recommender only
+# needs event_interest.csv, which is committed under backend/src/main/resources/
+# dataset/ (647 KB) and packaged into the jar. The raw download is NOT committed.
+# ─────────────────────────────────────────────────────────────────────────────
+/dataset/
+/dataset.zip
+
+# Trained recommender model artifacts (regenerated on startup / nightly cron)
+/data/
+/backend/data/
+
+# ── Build output ──────────────────────────────────────────────────────────────
+/backend/target/
+/frontend/dist/
+/frontend/node_modules/
+/frontend/.angular/
+*.class
+
+# ── Local uploads ─────────────────────────────────────────────────────────────
+/backend/uploads/
+/uploads/
+
+# ── Secrets / local config ────────────────────────────────────────────────────
+# Never commit credentials, keystores, or local environment overrides.
+.env
+.env.*
+*.p12
+*.jks
+application-local.yml
+application-local.properties
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── IDE / OS noise ────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ── Local-only docs / notes (not part of the deliverable source) ──────────────
+/memory/
+ΕργασίαΤΕΔ2026.pdf

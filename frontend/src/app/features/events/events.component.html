@@ -1,0 +1,159 @@
+<div class="page-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="sidebar-title">Filter Events</h2>
+
+    <!-- Text search -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Search</mat-label>
+      <input matInput [(ngModel)]="q" placeholder="keywords…"
+             (keydown.enter)="applyFilters()">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <!-- Category -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categories</mat-label>
+      <mat-select [(ngModel)]="selectedCats" multiple>
+        @for (cat of (categories$ | async) ?? []; track cat.id) {
+          <mat-option [value]="cat.name">{{ cat.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Date range -->
+    <div class="filter-row">
+      <mat-form-field appearance="outline">
+        <mat-label>From</mat-label>
+        <input matInput type="date" [(ngModel)]="from">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>To</mat-label>
+        <input matInput type="date" [(ngModel)]="to">
+      </mat-form-field>
+    </div>
+
+    <!-- Price range -->
+    <div class="filter-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Min price (€)</mat-label>
+        <input matInput type="number" min="0" [(ngModel)]="minPrice">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Max price (€)</mat-label>
+        <input matInput type="number" min="0" [(ngModel)]="maxPrice">
+      </mat-form-field>
+    </div>
+
+    <!-- City -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>City</mat-label>
+      <input matInput [(ngModel)]="city" placeholder="Athens">
+    </mat-form-field>
+
+    <!-- Geo radius -->
+    <div class="geo-section">
+      <div class="geo-header">
+        <span class="geo-label">Near me</span>
+        <button mat-stroked-button type="button" (click)="locateMe()" [disabled]="useGeo">
+          <mat-icon>my_location</mat-icon>
+          {{ useGeo ? (lat | number:'1.4-4') + ', ' + (lng | number:'1.4-4') : 'Use my location' }}
+        </button>
+        @if (useGeo) {
+          <button mat-icon-button (click)="useGeo = false; lat = null; lng = null"
+                  matTooltip="Clear location">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+      @if (geoError) { <p class="geo-error">{{ geoError }}</p> }
+      @if (useGeo) {
+        <div class="radius-row">
+          <span>Radius: {{ radiusKm }} km</span>
+          <mat-slider [min]="5" [max]="500" [step]="5" class="radius-slider">
+            <input matSliderThumb [(ngModel)]="radiusKm">
+          </mat-slider>
+        </div>
+      }
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="sidebar-actions">
+      <button mat-raised-button color="primary" class="full-width" (click)="applyFilters()">
+        <mat-icon>filter_list</mat-icon> Apply
+      </button>
+      <button mat-button class="full-width" (click)="clearFilters()">Clear all</button>
+    </div>
+  </aside>
+
+  <!-- Results -->
+  <main class="results">
+
+    <!-- personalised recommendations, only for authenticated users -->
+    @if (auth.currentUser$ | async) {
+      <app-recommended-events [limit]="5" />
+      <mat-divider style="margin-bottom: 1.5rem" />
+    }
+
+    <div class="results-header">
+      <h1>Browse Events</h1>
+      <span class="result-count">{{ total }} event{{ total !== 1 ? 's' : '' }} found</span>
+    </div>
+
+    @if (loading) {
+      <div class="spinner-center"><mat-spinner></mat-spinner></div>
+    } @else if (events.length === 0) {
+      <div class="empty-state">
+        <mat-icon>event_busy</mat-icon>
+        <p>No events match your filters.</p>
+        <button mat-stroked-button (click)="clearFilters()">Clear filters</button>
+      </div>
+    } @else {
+      <div class="event-grid">
+        @for (ev of events; track ev.id) {
+          <mat-card class="event-card" [routerLink]="['/events', ev.id]">
+            <mat-card-header>
+              <mat-card-title>{{ ev.title }}</mat-card-title>
+              <mat-card-subtitle>
+                {{ ev.startDatetime | date:'EEE, d MMM y · HH:mm' }}
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              @if (ev.venueName || ev.city) {
+                <p class="venue">
+                  <mat-icon class="inline-icon">place</mat-icon>
+                  {{ ev.venueName }}{{ ev.venueName && ev.city ? ', ' : '' }}{{ ev.city }}
+                </p>
+              }
+              <div class="card-meta">
+                <span class="status-badge" [class]="'status-' + ev.status.toLowerCase()">
+                  {{ ev.status }}
+                </span>
+                <span class="seats">
+                  {{ ev.capacity - ev.ticketsSold }} / {{ ev.capacity }} seats left
+                </span>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <a mat-button color="primary" [routerLink]="['/events', ev.id]">
+                View Details
+              </a>
+            </mat-card-actions>
+          </mat-card>
+        }
+      </div>
+
+      <mat-paginator [length]="total"
+                     [pageSize]="pageSize"
+                     [pageIndex]="page"
+                     [pageSizeOptions]="[12, 24, 48]"
+                     (page)="onPageChange($event)"
+                     showFirstLastButtons>
+      </mat-paginator>
+    }
+  </main>
+</div>

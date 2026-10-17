@@ -1,0 +1,185 @@
+<div class="page-container">
+
+  @if (loading) {
+    <div class="spinner-center"><mat-spinner></mat-spinner></div>
+  } @else if (error) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <a mat-stroked-button routerLink="/events">Back to Events</a>
+    </div>
+  } @else if (event) {
+
+    <!-- Header -->
+    <div class="event-header">
+      <div class="breadcrumb">
+        <a routerLink="/events">Events</a> / {{ event.title }}
+      </div>
+      <h1>{{ event.title }}</h1>
+      <div class="header-meta">
+        <span class="status-badge" [class]="'status-' + event.status.toLowerCase()">
+          {{ event.status }}
+        </span>
+        <span class="organizer">
+          by <strong>{{ event.organizerUsername }}</strong>
+        </span>
+        @if (event.categories.length) {
+          <mat-chip-set>
+            @for (cat of event.categories; track cat.id) {
+              <mat-chip>{{ cat.name }}</mat-chip>
+            }
+          </mat-chip-set>
+        }
+      </div>
+    </div>
+
+    <div class="content-grid">
+
+      <!-- Left column -->
+      <div class="left-col">
+
+        <!-- Photo carousel -->
+        @if (event.photoUrls.length > 0) {
+          <div class="carousel">
+            <img [src]="apiBase + currentPhoto" alt="Event photo" class="carousel-img">
+            @if (event.photoUrls.length > 1) {
+              <button mat-icon-button class="carousel-btn prev" (click)="prevPhoto()">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button mat-icon-button class="carousel-btn next" (click)="nextPhoto()">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+              <div class="carousel-dots">
+                @for (url of event.photoUrls; track url; let i = $index) {
+                  <span class="dot" [class.active]="i === photoIndex"
+                        (click)="photoIndex = i"></span>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Description -->
+        @if (event.description) {
+          <mat-card>
+            <mat-card-header><mat-card-title>About</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <p class="description">{{ event.description }}</p>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Map -->
+        @if (event.latitude != null && event.longitude != null) {
+          <mat-card>
+            <mat-card-header><mat-card-title>Location</mat-card-title></mat-card-header>
+            <mat-card-content>
+              @if (event.venueName) { <p class="venue-name">{{ event.venueName }}</p> }
+              @if (event.address || event.city) {
+                <p class="venue-addr">
+                  {{ event.address }}{{ event.address && event.city ? ', ' : '' }}{{ event.city }}
+                  {{ event.country ? ', ' + event.country : '' }}
+                </p>
+              }
+              <!-- Leaflet renders into this div via component code -->
+              <div id="event-map" class="map-container"></div>
+              <p class="map-credit">
+                Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors
+              </p>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+
+      <!-- Right column -->
+      <div class="right-col">
+
+        <!-- Datetime & Venue card -->
+        <mat-card class="info-card">
+          <mat-card-content>
+            <div class="info-row">
+              <mat-icon>calendar_today</mat-icon>
+              <div>
+                <div>{{ event.startDatetime | date:'EEEE, d MMMM y' }}</div>
+                <div class="sub">{{ event.startDatetime | date:'HH:mm' }} – {{ event.endDatetime | date:'HH:mm' }}</div>
+              </div>
+            </div>
+            @if (event.venueName || event.city) {
+              <mat-divider></mat-divider>
+              <div class="info-row">
+                <mat-icon>place</mat-icon>
+                <div>
+                  <div>{{ event.venueName }}</div>
+                  @if (event.city) { <div class="sub">{{ event.city }}{{ event.country ? ', ' + event.country : '' }}</div> }
+                </div>
+              </div>
+            }
+            <mat-divider></mat-divider>
+            <div class="info-row">
+              <mat-icon>people</mat-icon>
+              <div>
+                <div>{{ event.capacity - event.ticketsSold }} seats available</div>
+                <div class="sub">{{ event.ticketsSold }} / {{ event.capacity }} sold</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Ticket types -->
+        <mat-card>
+          <mat-card-header><mat-card-title>Tickets</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="event.ticketTypes" class="ticket-table">
+
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let tt">{{ tt.name }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="price">
+                <th mat-header-cell *matHeaderCellDef>Price</th>
+                <td mat-cell *matCellDef="let tt">
+                  {{ tt.price === 0 ? 'Free' : (tt.price | currency:'EUR':'symbol':'1.2-2') }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="available">
+                <th mat-header-cell *matHeaderCellDef>Available</th>
+                <td mat-cell *matCellDef="let tt">
+                  {{ available(tt.quantity) }}
+                  @if (available(tt.quantity) === 0) {
+                    <span class="sold-out">Sold out</span>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="ticketColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: ticketColumns;"></tr>
+            </table>
+          </mat-card-content>
+          <mat-card-actions>
+            @if (event.status === 'PUBLISHED' && event.ticketsSold < event.capacity) {
+              @if (auth.currentUser$ | async; as user) {
+                <button mat-raised-button color="primary" (click)="openBookingDialog()">
+                  Book Tickets
+                </button>
+              } @else {
+                <button mat-raised-button color="primary" (click)="openBookingDialog()">
+                  Log in to Book
+                </button>
+              }
+            } @else if (event.status === 'PUBLISHED') {
+              <button mat-stroked-button disabled>Sold Out</button>
+            }
+            @if (auth.currentUser$ | async) {
+              <button mat-stroked-button (click)="messageOrganizer()" style="margin-left:0.5rem">
+                <mat-icon>mail</mat-icon> Message Organizer
+              </button>
+            }
+          </mat-card-actions>
+        </mat-card>
+
+      </div>
+    </div>
+  }
+</div>

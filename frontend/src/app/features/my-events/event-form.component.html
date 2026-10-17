@@ -1,0 +1,210 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ eventId ? 'Edit Event' : 'New Event' }}</h1>
+    <a mat-button routerLink="/my-events">
+      <mat-icon>arrow_back</mat-icon> Back to My Events
+    </a>
+  </div>
+
+  @if (loading) {
+    <div class="spinner-center"><mat-spinner></mat-spinner></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <!-- Core details -->
+      <mat-card>
+        <mat-card-header><mat-card-title>Event Details</mat-card-title></mat-card-header>
+        <mat-card-content>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Title *</mat-label>
+            <input matInput formControlName="title" maxlength="200">
+            @if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
+              <mat-error>Title is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="4"></textarea>
+          </mat-form-field>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Start Date &amp; Time *</mat-label>
+              <input matInput type="datetime-local" formControlName="startDatetime">
+              @if (form.get('startDatetime')?.hasError('required') && form.get('startDatetime')?.touched) {
+                <mat-error>Required.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End Date &amp; Time *</mat-label>
+              <input matInput type="datetime-local" formControlName="endDatetime">
+              @if (form.get('endDatetime')?.hasError('required') && form.get('endDatetime')?.touched) {
+                <mat-error>Required.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+          @if (form.hasError('dateRangeInvalid') && form.get('endDatetime')?.touched) {
+            <p class="form-error">End date must be after start date.</p>
+          }
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Capacity *</mat-label>
+              <input matInput type="number" min="1" formControlName="capacity">
+              @if (form.get('capacity')?.hasError('required') && form.get('capacity')?.touched) {
+                <mat-error>Required.</mat-error>
+              }
+              @if (form.get('capacity')?.hasError('min')) {
+                <mat-error>Must be at least 1.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Categories *</mat-label>
+              <mat-select formControlName="categoryIds" multiple>
+                @for (cat of (categories$ | async) ?? []; track cat.id) {
+                  <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+                }
+              </mat-select>
+              @if (form.get('categoryIds')?.hasError('required') && form.get('categoryIds')?.touched) {
+                <mat-error>At least one category is required.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Venue -->
+      <mat-card>
+        <mat-card-header><mat-card-title>Venue</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Venue Name</mat-label>
+              <input matInput formControlName="venueName">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Address</mat-label>
+              <input matInput formControlName="address">
+            </mat-form-field>
+          </div>
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Country</mat-label>
+              <input matInput formControlName="country">
+            </mat-form-field>
+          </div>
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Latitude</mat-label>
+              <input matInput type="number" step="0.00001" formControlName="latitude">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Longitude</mat-label>
+              <input matInput type="number" step="0.00001" formControlName="longitude">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Ticket Types -->
+      <mat-card>
+        <mat-card-header><mat-card-title>Ticket Types</mat-card-title></mat-card-header>
+        <mat-card-content formArrayName="ticketTypes">
+
+          @if (form.hasError('ticketCapacityExceeded')) {
+            <p class="form-error">
+              Total quantities ({{ form.getError('ticketCapacityExceeded').total }})
+              exceed event capacity ({{ form.getError('ticketCapacityExceeded').capacity }}).
+            </p>
+          }
+
+          @for (ctrl of ticketTypes.controls; track ctrl; let i = $index) {
+            <div class="ticket-row" [formGroupName]="i">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" maxlength="100">
+                @if (ctrl.get('name')?.hasError('required') && ctrl.get('name')?.touched) {
+                  <mat-error>Required.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Price (€)</mat-label>
+                <input matInput type="number" min="0" step="0.01" formControlName="price">
+                @if (ctrl.get('price')?.hasError('min')) {
+                  <mat-error>Must be ≥ 0.</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Quantity</mat-label>
+                <input matInput type="number" min="1" formControlName="quantity">
+                @if (ctrl.get('quantity')?.hasError('min')) {
+                  <mat-error>Must be ≥ 1.</mat-error>
+                }
+              </mat-form-field>
+
+              <button mat-icon-button type="button" color="warn"
+                      (click)="removeTicketType(i)"
+                      [disabled]="ticketTypes.length === 1"
+                      matTooltip="Remove ticket type">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
+            </div>
+          }
+
+          <button mat-stroked-button type="button" (click)="addTicketType()">
+            <mat-icon>add</mat-icon> Add Ticket Type
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Photo upload (edit mode only) -->
+      @if (eventId) {
+        <mat-card>
+          <mat-card-header><mat-card-title>Photos</mat-card-title></mat-card-header>
+          <mat-card-content>
+            @if (photoUrls.length > 0) {
+              <div class="photo-grid">
+                @for (url of photoUrls; track url) {
+                  <img [src]="apiBase + url" alt="Event photo" class="photo-thumb">
+                }
+              </div>
+            }
+            @if (uploadingPhoto) {
+              <mat-spinner diameter="32"></mat-spinner>
+            } @else {
+              <button mat-stroked-button type="button" (click)="fileInput.click()">
+                <mat-icon>upload</mat-icon> Upload Photo
+              </button>
+              <input #fileInput type="file" accept="image/*"
+                     style="display:none" (change)="onPhotoSelected($event)">
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <a mat-button routerLink="/my-events">Cancel</a>
+        <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+          @if (saving) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            {{ eventId ? 'Save Changes' : 'Create Event' }}
+          }
+        </button>
+      </div>
+
+    </form>
+  }
+</div>

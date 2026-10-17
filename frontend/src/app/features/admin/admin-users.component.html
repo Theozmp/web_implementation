@@ -1,0 +1,100 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h1>User Management</h1>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search users…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [formControl]="searchControl" autocomplete="off" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="status-field">
+      <mat-label>Status</mat-label>
+      <mat-select [formControl]="statusControl">
+        <mat-option value="">All</mat-option>
+        <mat-option value="PENDING">Pending</mat-option>
+        <mat-option value="ACTIVE">Active</mat-option>
+        <mat-option value="REJECTED">Rejected</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading indicator -->
+  @if (loading) {
+    <div class="loading-row">
+      <mat-spinner diameter="32" />
+    </div>
+  }
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <table mat-table [dataSource]="users" matSort class="full-width">
+
+      <!-- Username -->
+      <ng-container matColumnDef="username">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Username</th>
+        <td mat-cell *matCellDef="let row">{{ row.username }}</td>
+      </ng-container>
+
+      <!-- Full name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let row">{{ row.firstName }} {{ row.lastName }}</td>
+      </ng-container>
+
+      <!-- Email -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+        <td mat-cell *matCellDef="let row">{{ row.email }}</td>
+      </ng-container>
+
+      <!-- Status badge -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-badge status-{{ row.status.toLowerCase() }}">
+            {{ row.status | titlecase }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Registered date -->
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Registered</th>
+        <td mat-cell *matCellDef="let row">{{ row.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <a mat-icon-button [routerLink]="['/admin/users', row.id]"
+             matTooltip="View details" (click)="$event.stopPropagation()">
+            <mat-icon>chevron_right</mat-icon>
+          </a>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+          class="clickable-row"
+          [routerLink]="['/admin/users', row.id]"></tr>
+    </table>
+
+    @if (!loading && users.length === 0) {
+      <p class="empty-state">No users match the current filters.</p>
+    }
+  </div>
+
+  <!-- Paginator -->
+  <mat-paginator
+    [length]="totalElements"
+    [pageSize]="20"
+    [pageSizeOptions]="[10, 20, 50]"
+    showFirstLastButtons />
+
+</div>

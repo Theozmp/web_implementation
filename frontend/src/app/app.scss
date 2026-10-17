@@ -1,0 +1,10 @@
+// Active router link gets a subtle highlight so the user knows where they are
+.active-link {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 4px;
+}
+
+main {
+  padding: 0;
+  min-height: calc(100vh - 64px); // 64px = Material toolbar default height
+}

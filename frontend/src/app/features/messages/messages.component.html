@@ -1,0 +1,137 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h1>Messages</h1>
+    <button mat-raised-button color="primary" (click)="openCompose()">
+      <mat-icon>edit</mat-icon> Compose
+    </button>
+  </div>
+
+  <div class="messages-layout">
+
+    <!-- Left panel: tab list -->
+    <div class="list-panel">
+      <mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="150ms">
+
+        <!-- Inbox tab -->
+        <mat-tab label="Inbox">
+          <ng-template matTabContent>
+            @if (loading) {
+              <div class="spinner-center"><mat-spinner diameter="36"></mat-spinner></div>
+            } @else if (messages.length === 0) {
+              <p class="empty-msg">Your inbox is empty.</p>
+            } @else {
+              <mat-nav-list>
+                @for (m of messages; track m.id) {
+                  <a mat-list-item
+                     [class.unread]="!m.read"
+                     [class.active]="selected?.id === m.id"
+                     (click)="openMessage(m)">
+                    <span matListItemTitle class="item-title">
+                      @if (!m.read) { <span class="unread-dot"></span> }
+                      {{ m.subject }}
+                    </span>
+                    <span matListItemLine class="item-meta">
+                      From {{ m.senderUsername }} · {{ m.sentAt | date:'d MMM y' }}
+                    </span>
+                    @if (m.eventTitle) {
+                      <span matListItemLine class="item-event">Re: {{ m.eventTitle }}</span>
+                    }
+                  </a>
+                  <mat-divider></mat-divider>
+                }
+              </mat-nav-list>
+              <mat-paginator [length]="totalElements"
+                             [pageSize]="size"
+                             [pageIndex]="page"
+                             hidePageSize
+                             (page)="onPage($event)">
+              </mat-paginator>
+            }
+          </ng-template>
+        </mat-tab>
+
+        <!-- Sent tab -->
+        <mat-tab label="Sent">
+          <ng-template matTabContent>
+            @if (loading) {
+              <div class="spinner-center"><mat-spinner diameter="36"></mat-spinner></div>
+            } @else if (messages.length === 0) {
+              <p class="empty-msg">No sent messages.</p>
+            } @else {
+              <mat-nav-list>
+                @for (m of messages; track m.id) {
+                  <a mat-list-item
+                     [class.active]="selected?.id === m.id"
+                     (click)="openMessage(m)">
+                    <span matListItemTitle class="item-title">{{ m.subject }}</span>
+                    <span matListItemLine class="item-meta">
+                      To {{ m.recipientUsername }} · {{ m.sentAt | date:'d MMM y' }}
+                    </span>
+                    @if (m.eventTitle) {
+                      <span matListItemLine class="item-event">Re: {{ m.eventTitle }}</span>
+                    }
+                  </a>
+                  <mat-divider></mat-divider>
+                }
+              </mat-nav-list>
+              <mat-paginator [length]="totalElements"
+                             [pageSize]="size"
+                             [pageIndex]="page"
+                             hidePageSize
+                             (page)="onPage($event)">
+              </mat-paginator>
+            }
+          </ng-template>
+        </mat-tab>
+
+      </mat-tab-group>
+    </div>
+
+    <!-- Right panel: detail -->
+    <div class="detail-panel">
+      @if (loadingDetail) {
+        <div class="spinner-center"><mat-spinner diameter="36"></mat-spinner></div>
+      } @else if (selected) {
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ selected.subject }}</mat-card-title>
+            <mat-card-subtitle>
+              From <strong>{{ selected.senderUsername }}</strong>
+              to <strong>{{ selected.recipientUsername }}</strong>
+              &nbsp;·&nbsp;{{ selected.sentAt | date:'d MMM y, HH:mm' }}
+              @if (selected.eventTitle) {
+                &nbsp;·&nbsp;Re: <a [routerLink]="['/events', selected.eventId]">{{ selected.eventTitle }}</a>
+              }
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-divider></mat-divider>
+
+          <mat-card-content>
+            <p class="message-body">{{ selected.body }}</p>
+          </mat-card-content>
+
+          <mat-card-actions>
+            @if (activeTab === 'inbox') {
+              <button mat-stroked-button (click)="replyTo(selected)">
+                <mat-icon>reply</mat-icon> Reply
+              </button>
+            }
+            <button mat-stroked-button color="warn"
+                    (click)="deleteSelected()"
+                    matTooltip="Soft-delete on your side only">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      } @else {
+        <div class="no-selection">
+          <mat-icon>mail_outline</mat-icon>
+          <p>Select a message to read it.</p>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>
